@@ -1,477 +1,502 @@
-import streamlit as st
-
-st.set_page_config(page_title="Pile Reaction Calculator", layout="wide")
-
-html_code = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pile Reaction Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>คำนวณแรงปฏิกิริยาเสาเข็มเยื้องศูนย์</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0f1117;
-    --surface: #181c27;
-    --surface2: #1e2333;
-    --border: #2a3045;
-    --accent: #4f8ef7;
-    --accent2: #7c5cfc;
-    --danger: #f45b5b;
-    --success: #3ecf8e;
-    --text: #e8eaf0;
-    --muted: #7a85a3;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans Thai', sans-serif;
-  }
   body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    background: #f5f4f0;
+    color: #2C2C2A;
     min-height: 100vh;
-    padding: 2rem 1rem;
-  }
-  .wrapper { max-width: 820px; margin: 0 auto; }
-  header {
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .tag {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    padding: 2px 8px;
-    margin-bottom: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    padding: 1.5rem;
   }
   h1 {
-    font-size: clamp(1.4rem, 4vw, 2rem);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #e8eaf0 30%, #7a85a3);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: #2C2C2A;
   }
-  .subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; font-weight: 300; }
-  .formula-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 2rem;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    color: var(--muted);
-    line-height: 1.8;
+  .subtitle {
+    font-size: 13px;
+    color: #5F5E5A;
+    margin-bottom: 1.5rem;
+  }
+  .section {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .sec-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #5F5E5A;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 1rem;
+  }
+  .row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 2rem;
-  }
-  .formula-bar span { color: var(--text); }
-  .formula-bar .eq { color: var(--accent); }
-  .inputs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .field {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    transition: border-color 0.2s;
-  }
-  .field:focus-within { border-color: var(--accent); }
-  .field label {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-bottom: 6px;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-  }
-  .field input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-family: var(--mono);
-    font-size: 1.25rem;
-    font-weight: 500;
-    color: var(--text);
-    -moz-appearance: textfield;
-  }
-  .field input::-webkit-outer-spin-button,
-  .field input::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .field .unit { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
-  .pile-editor-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.5rem;
-  }
-  .section-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-bottom: 0.75rem;
-  }
-  .pile-row {
-    display: grid;
-    grid-template-columns: 60px 1fr 1fr auto;
-    gap: 8px;
     align-items: center;
-    margin-bottom: 6px;
+    gap: 12px;
+    margin-bottom: 10px;
   }
-  .pile-row .lbl { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
-  .pile-row input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 8px;
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    color: var(--text);
-    width: 100%;
-    outline: none;
-    -moz-appearance: textfield;
-    transition: border-color 0.2s;
+  .row label {
+    font-size: 13px;
+    color: #5F5E5A;
+    min-width: 200px;
   }
-  .pile-row input:focus { border-color: var(--accent); }
-  .pile-row input::-webkit-outer-spin-button,
-  .pile-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .btn-rm {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--danger);
-    cursor: pointer;
-    width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem;
-    transition: background 0.15s;
+  .row input[type=number] {
+    width: 100px;
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 0.5px solid rgba(0,0,0,0.3);
+    border-radius: 8px;
+    background: #F1EFE8;
+    color: #2C2C2A;
   }
-  .btn-rm:hover { background: rgba(244,91,91,0.12); }
-  .btn-add {
-    margin-top: 6px;
-    background: transparent;
-    border: 1px dashed var(--border);
-    border-radius: 6px;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 0.8rem;
-    padding: 5px 14px;
-    transition: all 0.15s;
+  .row input[type=range] {
+    flex: 1;
+    max-width: 200px;
   }
-  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-calc {
-    width: 100%;
-    padding: 0.85rem;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 10px;
-    color: #fff;
-    font-family: var(--sans);
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    transition: opacity 0.2s, transform 0.1s;
-    margin-bottom: 2rem;
-  }
-  .btn-calc:hover { opacity: 0.9; }
-  .btn-calc:active { transform: scale(0.99); }
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.9rem 1rem;
-    text-align: center;
-  }
-  .card .c-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 6px; }
-  .card .c-val { font-family: var(--mono); font-size: 1.3rem; font-weight: 500; color: var(--accent); }
-  .card .c-unit { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
-  .results {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  thead tr { background: var(--surface2); }
-  th {
-    padding: 10px 16px;
-    font-size: 0.75rem;
+  .row span {
+    font-size: 14px;
     font-weight: 500;
-    color: var(--muted);
-    text-align: right;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
+    min-width: 36px;
   }
-  th:first-child { text-align: left; }
-  td {
-    padding: 10px 16px;
-    font-family: var(--mono);
-    font-size: 0.9rem;
-    text-align: right;
-    border-bottom: 1px solid var(--border);
+  .pile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    margin-bottom: 1rem;
   }
-  td:first-child { text-align: left; color: var(--muted); }
-  tr:last-child td { border-bottom: none; }
-  tr.positive .reaction-val { color: var(--success); }
-  tr.negative .reaction-val { color: var(--danger); }
-  tr.max-pile .reaction-val { font-weight: 600; }
-  .bar-cell { padding: 8px 16px; }
-  .bar-wrap { background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-  .diagram-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
+  .pile-card {
+    background: #F1EFE8;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: .75rem;
   }
-  #pile-svg { display: block; margin: 0 auto; }
-  #output { display: none; }
+  .pile-head {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #2C2C2A;
+  }
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .field-row span {
+    font-size: 12px;
+    color: #5F5E5A;
+    width: 28px;
+  }
+  .field-row input {
+    width: 68px;
+    font-size: 12px;
+    padding: 3px 6px;
+    border: 0.5px solid rgba(0,0,0,0.25);
+    border-radius: 8px;
+    background: #fff;
+    color: #2C2C2A;
+  }
+  .field-label {
+    font-size: 12px;
+    color: #5F5E5A;
+  }
+  .canvas-wrap {
+    background: #F1EFE8;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 12px;
+    padding: .75rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  canvas { display: block; margin: auto; }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .metric {
+    background: #F1EFE8;
+    border-radius: 8px;
+    padding: .75rem;
+  }
+  .metric .lbl { font-size: 12px; color: #5F5E5A; margin-bottom: 4px; }
+  .metric .val { font-size: 18px; font-weight: 500; color: #2C2C2A; }
+  .metric .sub { font-size: 11px; color: #888780; }
+  .pile-result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+  .ok   { background: #EAF3DE; color: #27500A; }
+  .warn { background: #FAEEDA; color: #633806; }
+  .over { background: #FCEBEB; color: #501313; }
+  .calc-btn {
+    width: 100%;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 500;
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    color: #2C2C2A;
+    transition: background .15s;
+    margin-bottom: 1rem;
+  }
+  .calc-btn:hover { background: #F1EFE8; }
+  .info-note {
+    font-size: 12px;
+    color: #185FA5;
+    background: #E6F1FB;
+    border: 0.5px solid #B5D4F4;
+    border-radius: 8px;
+    padding: .6rem .9rem;
+    margin-bottom: 1rem;
+  }
 </style>
 </head>
 <body>
-<div class="wrapper">
-  <header>
-    <div class="tag">Structural Engineering</div>
-    <h1>Pile Reaction Calculator</h1>
-    <p class="subtitle">คำนวณแรงปฏิกิริยาในกลุ่มเสาเข็มภายใต้แรงกระทำแบบนอกศูนย์</p>
-  </header>
-  <div class="formula-bar">
-    <div>R<sub>i</sub> <span class="eq">=</span> <span>P/n</span> <span class="eq">+</span> <span>Mx&middot;yi / &Sigma;yi&sup2;</span> <span class="eq">+</span> <span>My&middot;xi / &Sigma;xi&sup2;</span></div>
-    <div>Mx <span class="eq">=</span> <span>P&middot;e_y</span></div>
-    <div>My <span class="eq">=</span> <span>P&middot;e_x</span></div>
+
+<h1>คำนวณแรงปฏิกิริยาเสาเข็มเมื่อเกิดการเยื้องศูนย์</h1>
+<p class="subtitle">อ้างอิงสูตร: Bakhoum (1992) — มยผ.1106-64</p>
+
+<div class="section">
+  <div class="sec-title">พารามิเตอร์หลัก</div>
+  <div class="row">
+    <label>น้ำหนักบรรทุก Q (ตัน)</label>
+    <input type="number" id="Q" value="100" min="1" max="9999" step="1">
   </div>
-  <div class="inputs-grid">
-    <div class="field">
-      <label>แรงกระทำรวม P</label>
-      <input type="number" id="P" value="150">
-      <div class="unit">ตัน (ton)</div>
-    </div>
-    <div class="field">
-      <label>Eccentricity ex</label>
-      <input type="number" id="ex" value="0">
-      <div class="unit">cm (แนว X)</div>
-    </div>
-    <div class="field">
-      <label>Eccentricity ey</label>
-      <input type="number" id="ey" value="0">
-      <div class="unit">cm (แนว Y)</div>
-    </div>
+  <div class="row">
+    <label>น้ำหนักปลอดภัยเสาเข็ม (ตัน/ต้น)</label>
+    <input type="number" id="Qsafe" value="40" min="1" max="999" step="1">
   </div>
-  <div class="pile-editor-section">
-    <div class="section-label">ตำแหน่งเสาเข็ม (cm)</div>
-    <div class="pile-row" style="color:var(--muted);font-size:0.72rem;margin-bottom:4px;">
-      <div></div><div>X (cm)</div><div>Y (cm)</div><div></div>
-    </div>
-    <div id="pile-list"></div>
-    <button class="btn-add" onclick="addPile()">+ เพิ่มเสาเข็ม</button>
+  <div class="row">
+    <label>จำนวนเสาเข็ม (n)</label>
+    <input type="range" id="nPiles" min="2" max="6" value="4" step="1">
+    <span id="nPilesOut">4 ต้น</span>
   </div>
-  <button class="btn-calc" onclick="calculate()">คำนวณแรงปฏิกิริยา</button>
-  <div id="output">
-    <div class="summary-grid">
-      <div class="card"><div class="c-label">n (จำนวนเสาเข็ม)</div><div class="c-val" id="s-n">-</div></div>
-      <div class="card"><div class="c-label">Mx = P x ey</div><div class="c-val" id="s-mx">-</div><div class="c-unit">ตัน&middot;cm</div></div>
-      <div class="card"><div class="c-label">My = P x ex</div><div class="c-val" id="s-my">-</div><div class="c-unit">ตัน&middot;cm</div></div>
-      <div class="card"><div class="c-label">Sxi2</div><div class="c-val" id="s-sx2">-</div><div class="c-unit">cm2</div></div>
-      <div class="card"><div class="c-label">Syi2</div><div class="c-val" id="s-sy2">-</div><div class="c-unit">cm2</div></div>
-      <div class="card"><div class="c-label">R สูงสุด</div><div class="c-val" id="s-rmax">-</div><div class="c-unit">ตัน</div></div>
-    </div>
-    <div class="results">
-      <table>
-        <thead>
-          <tr>
-            <th>Pile</th>
-            <th>X (cm)</th>
-            <th>Y (cm)</th>
-            <th>P/n</th>
-            <th>Mx*y/Sy2</th>
-            <th>My*x/Sx2</th>
-            <th>Reaction (ตัน)</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-      <table style="margin-top:0;">
-        <tbody id="bar-body"></tbody>
-      </table>
-    </div>
-    <div class="diagram-section">
-      <div class="section-label" style="margin-bottom:0.75rem;">แผนผังตำแหน่งและแรงปฏิกิริยา</div>
-      <svg id="pile-svg" viewBox="-160 -160 320 320" width="100%" style="max-height:280px;"></svg>
-    </div>
+  <div class="row">
+    <label>ระยะห่างเสาเข็ม S (cm)</label>
+    <input type="number" id="S" value="120" min="30" max="500" step="5">
   </div>
 </div>
+
+<div class="section">
+  <div class="sec-title">ระยะเยื้องศูนย์แต่ละต้น (cm)</div>
+  <div class="info-note">
+    วัดจากตำแหน่งออกแบบ: +eₓ = เยื้องขวา, −eₓ = เยื้องซ้าย, +e_y = เยื้องขึ้น, −e_y = เยื้องลง
+  </div>
+  <div class="pile-grid" id="pileInputs"></div>
+</div>
+
+<button class="calc-btn" onclick="calculate()">คำนวณแรงปฏิกิริยา</button>
+
+<div id="diagram-wrap" class="canvas-wrap" style="display:none">
+  <canvas id="diagramCanvas" width="660" height="340"></canvas>
+</div>
+
+<div id="resultsSection" style="display:none">
+  <div class="section">
+    <div class="sec-title">จุด Centroid ใหม่ และโมเมนต์ที่เกิดขึ้น</div>
+    <div class="results-grid" id="centroidCards"></div>
+  </div>
+  <div class="section">
+    <div class="sec-title">แรงปฏิกิริยาแต่ละต้น (เทียบกับน้ำหนักปลอดภัย)</div>
+    <div id="pileResults"></div>
+  </div>
+</div>
+
 <script>
-let piles = [
-  {x:-60, y:95},
-  {x:60,  y:95},
-  {x:-60, y:-95},
-  {x:60,  y:-95}
-];
+const nSlider = document.getElementById('nPiles');
+const nOut    = document.getElementById('nPilesOut');
 
-function renderPileList() {
-  const list = document.getElementById('pile-list');
-  list.innerHTML = piles.map((p, i) => `
-    <div class="pile-row">
-      <div class="lbl">Pile ${i+1}</div>
-      <input type="number" value="${p.x}" oninput="piles[${i}].x=parseFloat(this.value)||0" placeholder="X">
-      <input type="number" value="${p.y}" oninput="piles[${i}].y=parseFloat(this.value)||0" placeholder="Y">
-      <button class="btn-rm" onclick="removePile(${i})" title="ลบ">x</button>
-    </div>
-  `).join('');
+nSlider.addEventListener('input', () => {
+  nOut.textContent = nSlider.value + ' ต้น';
+  buildPileInputs();
+});
+
+function buildPileInputs() {
+  const n = parseInt(nSlider.value);
+  const grid = document.getElementById('pileInputs');
+  grid.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const div = document.createElement('div');
+    div.className = 'pile-card';
+    div.innerHTML = `
+      <div class="pile-head">เสาเข็มที่ ${i + 1}</div>
+      <div class="field-row">
+        <span>eₓ</span>
+        <input type="number" id="ex${i}" value="0" step="0.5">
+        <span class="field-label">cm</span>
+      </div>
+      <div class="field-row">
+        <span>e_y</span>
+        <input type="number" id="ey${i}" value="0" step="0.5">
+        <span class="field-label">cm</span>
+      </div>`;
+    grid.appendChild(div);
+  }
 }
+buildPileInputs();
 
-function addPile() {
-  piles.push({x:0, y:0});
-  renderPileList();
-}
-
-function removePile(i) {
-  if (piles.length <= 2) { alert('ต้องมีเสาเข็มอย่างน้อย 2 ต้น'); return; }
-  piles.splice(i, 1);
-  renderPileList();
+/* ตำแหน่งมาตรฐาน layout เสาเข็ม */
+function getPilePositions(n, S) {
+  const pos = [];
+  if (n === 2) {
+    pos.push([-S/2, 0], [S/2, 0]);
+  } else if (n === 3) {
+    const h = S * Math.sqrt(3) / 2;
+    pos.push([-S/2, -h/3], [S/2, -h/3], [0, 2*h/3]);
+  } else if (n === 4) {
+    pos.push([-S/2, -S/2], [S/2, -S/2], [S/2, S/2], [-S/2, S/2]);
+  } else if (n === 5) {
+    pos.push([-S/2, -S/2], [S/2, -S/2], [S/2, S/2], [-S/2, S/2], [0, 0]);
+  } else if (n === 6) {
+    pos.push([-S, -S/2], [0, -S/2], [S, -S/2], [-S, S/2], [0, S/2], [S, S/2]);
+  }
+  return pos;
 }
 
 function calculate() {
-  const P  = parseFloat(document.getElementById('P').value)  || 0;
-  const ex = parseFloat(document.getElementById('ex').value) || 0;
-  const ey = parseFloat(document.getElementById('ey').value) || 0;
-  const n  = piles.length;
+  const Q      = parseFloat(document.getElementById('Q').value)     || 100;
+  const Qsafe  = parseFloat(document.getElementById('Qsafe').value) || 40;
+  const n      = parseInt(nSlider.value);
+  const S      = parseFloat(document.getElementById('S').value)     || 120;
 
-  document.querySelectorAll('#pile-list .pile-row').forEach((row, i) => {
-    const inputs = row.querySelectorAll('input');
-    piles[i].x = parseFloat(inputs[0].value) || 0;
-    piles[i].y = parseFloat(inputs[1].value) || 0;
-  });
-
-  const Mx  = P * ey;
-  const My  = P * ex;
-  const sx2 = piles.reduce((s,p) => s + p.x*p.x, 0);
-  const sy2 = piles.reduce((s,p) => s + p.y*p.y, 0);
-
-  const results = piles.map((p, i) => {
-    const base  = P / n;
-    const termY = sy2 !== 0 ? Mx * p.y / sy2 : 0;
-    const termX = sx2 !== 0 ? My * p.x / sx2 : 0;
-    return { pile: i+1, x: p.x, y: p.y, base, termY, termX, R: base + termY + termX };
-  });
-
-  const Rmax = Math.max(...results.map(r => Math.abs(r.R)));
-
-  document.getElementById('s-n').textContent    = n;
-  document.getElementById('s-mx').textContent   = Mx.toFixed(2);
-  document.getElementById('s-my').textContent   = My.toFixed(2);
-  document.getElementById('s-sx2').textContent  = sx2.toFixed(0);
-  document.getElementById('s-sy2').textContent  = sy2.toFixed(0);
-  document.getElementById('s-rmax').textContent = Rmax.toFixed(2);
-
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = results.map(r => {
-    const isMax = Math.abs(r.R) === Rmax;
-    const cls   = r.R < 0 ? 'negative' : 'positive';
-    return '<tr class="' + cls + (isMax ? ' max-pile' : '') + '">' +
-      '<td>Pile ' + r.pile + (isMax ? ' *' : '') + '</td>' +
-      '<td>' + r.x + '</td>' +
-      '<td>' + r.y + '</td>' +
-      '<td>' + r.base.toFixed(2) + '</td>' +
-      '<td>' + r.termY.toFixed(2) + '</td>' +
-      '<td>' + r.termX.toFixed(2) + '</td>' +
-      '<td class="reaction-val">' + r.R.toFixed(2) + '</td>' +
-      '</tr>';
-  }).join('');
-
-  const barBody = document.getElementById('bar-body');
-  barBody.innerHTML = results.map(r => {
-    const pct   = Rmax > 0 ? (Math.abs(r.R)/Rmax*100).toFixed(1) : 0;
-    const color = r.R < 0 ? '#f45b5b' : '#3ecf8e';
-    return '<tr>' +
-      '<td style="color:var(--muted);width:70px;">Pile ' + r.pile + '</td>' +
-      '<td class="bar-cell"><div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div></td>' +
-      '<td style="font-family:var(--mono);font-size:0.8rem;width:80px;color:' + color + ';">' + r.R.toFixed(2) + ' t</td>' +
-      '</tr>';
-  }).join('');
-
-  drawDiagram(results, Rmax);
-
-  document.getElementById('output').style.display = 'block';
-  document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function drawDiagram(results, Rmax) {
-  const svg = document.getElementById('pile-svg');
-  const xs = results.map(r => r.x), ys = results.map(r => r.y);
-  const span = Math.max(
-    Math.max(...xs) - Math.min(...xs),
-    Math.max(...ys) - Math.min(...ys),
-    1
-  );
-  const sc = Math.min(120 / (span / 2 + 30), 1.4);
-
-  let h = '';
-  h += '<line x1="-150" y1="0" x2="150" y2="0" stroke="#2a3045" stroke-width="0.8"/>';
-  h += '<line x1="0" y1="-150" x2="0" y2="150" stroke="#2a3045" stroke-width="0.8"/>';
-  h += '<text x="148" y="12" font-size="10" fill="#7a85a3" text-anchor="end">X</text>';
-  h += '<text x="6" y="-138" font-size="10" fill="#7a85a3">Y</text>';
-
-  const pts = results.map(r => [r.x * sc, -r.y * sc]);
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[i], b = pts[(i+1) % pts.length];
-    h += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="#2a3045" stroke-width="1" stroke-dasharray="4,3"/>';
+  const nomPos = getPilePositions(n, S);
+  const exArr  = [], eyArr = [];
+  for (let i = 0; i < n; i++) {
+    exArr.push(parseFloat(document.getElementById('ex' + i).value) || 0);
+    eyArr.push(parseFloat(document.getElementById('ey' + i).value) || 0);
   }
 
-  results.forEach(r => {
-    const cx = r.x * sc;
-    const cy = -r.y * sc;
-    const isMax = Math.abs(r.R) === Rmax;
-    const neg  = r.R < 0;
-    const fill = neg ? '#f45b5b' : (isMax ? '#4f8ef7' : '#3ecf8e');
-    const radius = 13 + (Rmax > 0 ? Math.abs(r.R) / Rmax * 6 : 0);
-    const arrowLen = Rmax > 0 ? 30 * Math.abs(r.R) / Rmax : 0;
-    const dir = neg ? 1 : -1;
-    const markerId = neg ? 'arr-down' : 'arr-up';
-    h += '<line x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy + dir*arrowLen) + '" stroke="' + fill + '" stroke-width="2" marker-end="url(#' + markerId + ')"/>';
-    h += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + fill + '" opacity="0.9"/>';
-    h += '<text x="' + cx + '" y="' + (cy+4) + '" font-size="10" text-anchor="middle" fill="#0f1117" font-weight="600">' + r.pile + '</text>';
-    h += '<text x="' + (cx+radius+4) + '" y="' + (cy-4) + '" font-size="9" fill="' + fill + '" font-weight="500">' + r.R.toFixed(1) + 't</text>';
+  /* ตำแหน่งจริงหลังเยื้อง */
+  const actualX = nomPos.map((p, i) => p[0] + exArr[i]);
+  const actualY = nomPos.map((p, i) => p[1] + eyArr[i]);
+
+  /* Centroid ใหม่ */
+  const Xbar = actualX.reduce((a, b) => a + b, 0) / n;
+  const Ybar = actualY.reduce((a, b) => a + b, 0) / n;
+
+  /* โมเมนต์ที่เกิดจากการเยื้อง */
+  const Mx = Q * Ybar;
+  const My = Q * Xbar;
+
+  /* พิกัดใหม่จาก Centroid ใหม่ */
+  const xi = actualX.map(x => x - Xbar);
+  const yi = actualY.map(y => y - Ybar);
+
+  const sumX2  = xi.reduce((a, b) => a + b * b, 0);
+  const sumY2  = yi.reduce((a, b) => a + b * b, 0);
+  const sumXY  = xi.reduce((a, v, i) => a + v * yi[i], 0);
+  const denom  = sumX2 * sumY2 - sumXY * sumXY;
+
+  let Pi = [];
+  if (Math.abs(sumXY) < 1e-9 || Math.abs(denom) < 1e-9) {
+    /* กรณีแกนหลักตรงกัน (สมมาตร) */
+    Pi = xi.map((x, i) =>
+      Q / n
+      + (sumX2 > 1e-9 ? My * x / sumX2 : 0)
+      + (sumY2 > 1e-9 ? Mx * yi[i] / sumY2 : 0)
+    );
+  } else {
+    /* กรณีทั่วไป — Bakhoum (1992) */
+    const m  = (My * sumY2 - Mx * sumXY) / denom;
+    const nv = (Mx * sumX2 - My * sumXY) / denom;
+    Pi = xi.map((x, i) => Q / n + m * x + nv * yi[i]);
+  }
+
+  drawDiagram(n, nomPos, actualX, actualY, Xbar, Ybar, exArr, eyArr, S, xi, yi);
+
+  /* แสดง Centroid cards */
+  document.getElementById('centroidCards').innerHTML = `
+    <div class="metric"><div class="lbl">X̄ (Centroid แกน X)</div><div class="val">${Xbar.toFixed(2)}</div><div class="sub">cm</div></div>
+    <div class="metric"><div class="lbl">Ȳ (Centroid แกน Y)</div><div class="val">${Ybar.toFixed(2)}</div><div class="sub">cm</div></div>
+    <div class="metric"><div class="lbl">Mₓ = Q × Ȳ</div><div class="val">${Mx.toFixed(1)}</div><div class="sub">ตัน-cm</div></div>
+    <div class="metric"><div class="lbl">My = Q × X̄</div><div class="val">${My.toFixed(1)}</div><div class="sub">ตัน-cm</div></div>
+    <div class="metric"><div class="lbl">Σx²</div><div class="val">${sumX2.toFixed(1)}</div><div class="sub">cm²</div></div>
+    <div class="metric"><div class="lbl">Σy²</div><div class="val">${sumY2.toFixed(1)}</div><div class="sub">cm²</div></div>
+    <div class="metric"><div class="lbl">Σxy</div><div class="val">${sumXY.toFixed(1)}</div><div class="sub">cm²</div></div>`;
+
+  /* แสดงแรงแต่ละต้น */
+  const resDiv = document.getElementById('pileResults');
+  resDiv.innerHTML = '';
+  Pi.forEach((p, i) => {
+    const pct = p / Qsafe * 100;
+    let cls = 'ok', txt = 'ปลอดภัย';
+    if (pct > 100) { cls = 'over'; txt = 'เกินขีดจำกัด!'; }
+    else if (pct > 80) { cls = 'warn'; txt = 'เฝ้าระวัง'; }
+    resDiv.innerHTML += `
+      <div class="pile-result-row">
+        <div style="font-size:13px;font-weight:500">เสาเข็มที่ ${i + 1}</div>
+        <div style="font-size:12px;color:#5F5E5A">x=${xi[i].toFixed(1)}, y=${yi[i].toFixed(1)} cm</div>
+        <div style="font-size:16px;font-weight:500">${p.toFixed(2)} ตัน</div>
+        <div style="font-size:12px;color:#5F5E5A">${pct.toFixed(0)}% ของ P_allow</div>
+        <span class="badge ${cls}">${txt}</span>
+      </div>`;
   });
 
-  const defs = '<defs>' +
-    '<marker id="arr-up" markerWidth="6" markerHeight="6" refX="3" refY="6" orient="auto">' +
-    '<path d="M0,6 L3,0 L6,6" fill="none" stroke="#3ecf8e" stroke-width="1"/></marker>' +
-    '<marker id="arr-down" markerWidth="6" markerHeight="6" refX="3" refY="0" orient="auto">' +
-    '<path d="M0,0 L3,6 L6,0" fill="none" stroke="#f45b5b" stroke-width="1"/></marker>' +
-    '</defs>';
-
-  svg.innerHTML = defs + h;
+  document.getElementById('diagram-wrap').style.display = 'block';
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('diagram-wrap').scrollIntoView({ behavior: 'smooth' });
 }
 
-renderPileList();
+/* ---------- วาดแผนภาพ ---------- */
+function drawDiagram(n, nomPos, actualX, actualY, Xbar, Ybar, exArr, eyArr, S, xi, yi) {
+  const canvas = document.getElementById('diagramCanvas');
+  const ctx    = canvas.getContext('2d');
+  const W = 660, H = 340;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+
+  const textC  = '#2C2C2A';
+  const borderC = 'rgba(0,0,0,0.12)';
+  const nomC   = '#378ADD';
+  const actC   = '#D85A30';
+  const centC  = '#1D9E75';
+  const arrowC = '#EF9F27';
+
+  /* หา scale */
+  const allX = [...nomPos.map(p => p[0]), ...actualX, Xbar];
+  const allY = [...nomPos.map(p => p[1]), ...actualY, Ybar];
+  const minX = Math.min(...allX) - S * 0.9;
+  const maxX = Math.max(...allX) + S * 0.9;
+  const minY = Math.min(...allY) - S * 0.9;
+  const maxY = Math.max(...allY) + S * 0.9;
+  const rangeX = maxX - minX || S * 2;
+  const rangeY = maxY - minY || S * 2;
+  const scale  = Math.min((W - 120) / rangeX, (H - 80) / rangeY);
+
+  const cx = x => (x - minX) * scale + 60;
+  const cy = y => H - ((y - minY) * scale + 40);
+
+  /* พื้นที่ฐานราก (outline) */
+  const bx1 = Math.min(...actualX), bx2 = Math.max(...actualX);
+  const by1 = Math.min(...actualY), by2 = Math.max(...actualY);
+  const pad = S * 0.38;
+  ctx.fillStyle = 'rgba(55,138,221,0.05)';
+  ctx.strokeStyle = borderC;
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.roundRect(cx(bx1 - pad), cy(by2 + pad),
+    (bx2 - bx1 + 2 * pad) * scale,
+    (by2 - by1 + 2 * pad) * scale, 6);
+  ctx.fill(); ctx.stroke();
+
+  /* แกน XY */
+  const ox = cx(0), oy = cy(0);
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(ox, cy(minY)); ctx.lineTo(ox, cy(maxY)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx(minX), oy); ctx.lineTo(cx(maxX), oy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#888780'; ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('Y', ox, cy(maxY) - 4);
+  ctx.textAlign = 'left';   ctx.fillText('X', cx(maxX) + 4, oy + 4);
+
+  /* ตำแหน่งออกแบบ (วงกลมประ) */
+  nomPos.forEach(p => {
+    ctx.beginPath(); ctx.arc(cx(p[0]), cy(p[1]), 12, 0, Math.PI * 2);
+    ctx.strokeStyle = nomC; ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
+  });
+
+  /* เส้นเยื้อง */
+  nomPos.forEach((p, i) => {
+    if (exArr[i] !== 0 || eyArr[i] !== 0) {
+      ctx.beginPath();
+      ctx.moveTo(cx(p[0]), cy(p[1]));
+      ctx.lineTo(cx(actualX[i]), cy(actualY[i]));
+      ctx.strokeStyle = arrowC; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  });
+
+  /* ตำแหน่งจริง */
+  actualX.forEach((ax, i) => {
+    const ay = actualY[i];
+    ctx.beginPath(); ctx.arc(cx(ax), cy(ay), 13, 0, Math.PI * 2);
+    ctx.fillStyle = actC + '30'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx(ax), cy(ay), 13, 0, Math.PI * 2);
+    ctx.strokeStyle = actC; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = textC; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(i + 1, cx(ax), cy(ay));
+    ctx.font = '11px sans-serif';
+    if (exArr[i] !== 0 || eyArr[i] !== 0) {
+      ctx.fillStyle = arrowC;
+      const ex = exArr[i] >= 0 ? '+' + exArr[i] : '' + exArr[i];
+      const ey = eyArr[i] >= 0 ? '+' + eyArr[i] : '' + eyArr[i];
+      ctx.fillText(`(${ex},${ey})`, cx(ax), cy(ay) - 20);
+    }
+  });
+
+  /* Centroid ใหม่ */
+  if (Math.abs(Xbar) > 0.01 || Math.abs(Ybar) > 0.01) {
+    const cgx = cx(Xbar), cgy = cy(Ybar);
+    ctx.beginPath();
+    ctx.moveTo(cgx - 8, cgy); ctx.lineTo(cgx + 8, cgy);
+    ctx.moveTo(cgx, cgy - 8); ctx.lineTo(cgx, cgy + 8);
+    ctx.strokeStyle = centC; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cgx, cgy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = centC; ctx.fill();
+    ctx.fillStyle = centC; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(`Centroid ใหม่ (${Xbar.toFixed(2)}, ${Ybar.toFixed(2)})`, cgx + 8, cgy - 4);
+  }
+
+  /* Centroid เดิม (0,0) */
+  ctx.beginPath(); ctx.arc(ox, oy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#888780'; ctx.fill();
+  ctx.fillStyle = '#888780'; ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('O (0,0)', ox + 6, oy - 4);
+
+  /* Legend */
+  const legends = [
+    { c: nomC,   t: 'ตำแหน่งออกแบบ', dash: true },
+    { c: actC,   t: 'ตำแหน่งจริง (เยื้อง)' },
+    { c: arrowC, t: 'ระยะเยื้อง' },
+    { c: centC,  t: 'Centroid ใหม่' },
+  ];
+  let lx = 10;
+  ctx.textBaseline = 'middle';
+  legends.forEach(l => {
+    ctx.beginPath();
+    if (l.dash) ctx.setLineDash([5, 3]);
+    ctx.moveTo(lx, 14); ctx.lineTo(lx + 20, 14);
+    ctx.strokeStyle = l.c; ctx.lineWidth = 2; ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = textC; ctx.textAlign = 'left';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(l.t, lx + 24, 14);
+    lx += ctx.measureText(l.t).width + 44;
+  });
+}
 </script>
 </body>
-</html>"""
-
-st.components.v1.html(html_code, height=1200, scrolling=True)
+</html>
