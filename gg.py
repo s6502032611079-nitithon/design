@@ -1,502 +1,366 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>คำนวณแรงปฏิกิริยาเสาเข็มเยื้องศูนย์</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Sarabun', sans-serif;
-    background: #f5f4f0;
-    color: #2C2C2A;
-    min-height: 100vh;
-    padding: 1.5rem;
-  }
-  h1 {
-    font-size: 20px;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    color: #2C2C2A;
-  }
-  .subtitle {
-    font-size: 13px;
-    color: #5F5E5A;
-    margin-bottom: 1.5rem;
-  }
-  .section {
-    background: #fff;
-    border: 0.5px solid rgba(0,0,0,0.15);
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-  .sec-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: #5F5E5A;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    margin-bottom: 1rem;
-  }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-  .row label {
-    font-size: 13px;
-    color: #5F5E5A;
-    min-width: 200px;
-  }
-  .row input[type=number] {
-    width: 100px;
-    padding: 6px 8px;
-    font-size: 13px;
-    border: 0.5px solid rgba(0,0,0,0.3);
-    border-radius: 8px;
-    background: #F1EFE8;
-    color: #2C2C2A;
-  }
-  .row input[type=range] {
-    flex: 1;
-    max-width: 200px;
-  }
-  .row span {
-    font-size: 14px;
-    font-weight: 500;
-    min-width: 36px;
-  }
-  .pile-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-  .pile-card {
-    background: #F1EFE8;
-    border: 0.5px solid rgba(0,0,0,0.15);
-    border-radius: 8px;
-    padding: .75rem;
-  }
-  .pile-head {
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: #2C2C2A;
-  }
-  .field-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-  }
-  .field-row span {
-    font-size: 12px;
-    color: #5F5E5A;
-    width: 28px;
-  }
-  .field-row input {
-    width: 68px;
-    font-size: 12px;
-    padding: 3px 6px;
-    border: 0.5px solid rgba(0,0,0,0.25);
-    border-radius: 8px;
-    background: #fff;
-    color: #2C2C2A;
-  }
-  .field-label {
-    font-size: 12px;
-    color: #5F5E5A;
-  }
-  .canvas-wrap {
-    background: #F1EFE8;
-    border: 0.5px solid rgba(0,0,0,0.15);
-    border-radius: 12px;
-    padding: .75rem;
-    margin-bottom: 1rem;
-    overflow: hidden;
-  }
-  canvas { display: block; margin: auto; }
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-  .metric {
-    background: #F1EFE8;
-    border-radius: 8px;
-    padding: .75rem;
-  }
-  .metric .lbl { font-size: 12px; color: #5F5E5A; margin-bottom: 4px; }
-  .metric .val { font-size: 18px; font-weight: 500; color: #2C2C2A; }
-  .metric .sub { font-size: 11px; color: #888780; }
-  .pile-result-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    border: 0.5px solid rgba(0,0,0,0.15);
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 8px;
-    font-weight: 500;
-  }
-  .ok   { background: #EAF3DE; color: #27500A; }
-  .warn { background: #FAEEDA; color: #633806; }
-  .over { background: #FCEBEB; color: #501313; }
-  .calc-btn {
-    width: 100%;
-    padding: 11px;
-    font-size: 14px;
-    font-weight: 500;
-    background: #fff;
-    border: 0.5px solid rgba(0,0,0,0.3);
-    border-radius: 8px;
-    cursor: pointer;
-    color: #2C2C2A;
-    transition: background .15s;
-    margin-bottom: 1rem;
-  }
-  .calc-btn:hover { background: #F1EFE8; }
-  .info-note {
-    font-size: 12px;
-    color: #185FA5;
-    background: #E6F1FB;
-    border: 0.5px solid #B5D4F4;
-    border-radius: 8px;
-    padding: .6rem .9rem;
-    margin-bottom: 1rem;
-  }
-</style>
-</head>
-<body>
+"""
+คำนวณแรงปฏิกิริยาเสาเข็มเมื่อเกิดการเยื้องศูนย์
+อ้างอิงสูตร: Bakhoum (1992) — มยผ.1106-64
 
-<h1>คำนวณแรงปฏิกิริยาเสาเข็มเมื่อเกิดการเยื้องศูนย์</h1>
-<p class="subtitle">อ้างอิงสูตร: Bakhoum (1992) — มยผ.1106-64</p>
+รันด้วย:
+    pip install matplotlib
+    python pile_calc.py
+"""
 
-<div class="section">
-  <div class="sec-title">พารามิเตอร์หลัก</div>
-  <div class="row">
-    <label>น้ำหนักบรรทุก Q (ตัน)</label>
-    <input type="number" id="Q" value="100" min="1" max="9999" step="1">
-  </div>
-  <div class="row">
-    <label>น้ำหนักปลอดภัยเสาเข็ม (ตัน/ต้น)</label>
-    <input type="number" id="Qsafe" value="40" min="1" max="999" step="1">
-  </div>
-  <div class="row">
-    <label>จำนวนเสาเข็ม (n)</label>
-    <input type="range" id="nPiles" min="2" max="6" value="4" step="1">
-    <span id="nPilesOut">4 ต้น</span>
-  </div>
-  <div class="row">
-    <label>ระยะห่างเสาเข็ม S (cm)</label>
-    <input type="number" id="S" value="120" min="30" max="500" step="5">
-  </div>
-</div>
+import math
+import tkinter as tk
+from tkinter import ttk, messagebox
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib
+matplotlib.rcParams['font.family'] = 'Tahoma'
 
-<div class="section">
-  <div class="sec-title">ระยะเยื้องศูนย์แต่ละต้น (cm)</div>
-  <div class="info-note">
-    วัดจากตำแหน่งออกแบบ: +eₓ = เยื้องขวา, −eₓ = เยื้องซ้าย, +e_y = เยื้องขึ้น, −e_y = เยื้องลง
-  </div>
-  <div class="pile-grid" id="pileInputs"></div>
-</div>
 
-<button class="calc-btn" onclick="calculate()">คำนวณแรงปฏิกิริยา</button>
+# ─────────────────────────────────────────────────────
+# ตำแหน่ง layout มาตรฐาน
+# ─────────────────────────────────────────────────────
+def get_nom_positions(n, S):
+    if n == 2:
+        return [(-S/2, 0), (S/2, 0)]
+    elif n == 3:
+        h = S * math.sqrt(3) / 2
+        return [(-S/2, -h/3), (S/2, -h/3), (0, 2*h/3)]
+    elif n == 4:
+        return [(-S/2, -S/2), (S/2, -S/2), (S/2, S/2), (-S/2, S/2)]
+    elif n == 5:
+        return [(-S/2, -S/2), (S/2, -S/2), (S/2, S/2), (-S/2, S/2), (0, 0)]
+    elif n == 6:
+        return [(-S, -S/2), (0, -S/2), (S, -S/2),
+                (-S,  S/2), (0,  S/2), (S,  S/2)]
 
-<div id="diagram-wrap" class="canvas-wrap" style="display:none">
-  <canvas id="diagramCanvas" width="660" height="340"></canvas>
-</div>
 
-<div id="resultsSection" style="display:none">
-  <div class="section">
-    <div class="sec-title">จุด Centroid ใหม่ และโมเมนต์ที่เกิดขึ้น</div>
-    <div class="results-grid" id="centroidCards"></div>
-  </div>
-  <div class="section">
-    <div class="sec-title">แรงปฏิกิริยาแต่ละต้น (เทียบกับน้ำหนักปลอดภัย)</div>
-    <div id="pileResults"></div>
-  </div>
-</div>
+# ─────────────────────────────────────────────────────
+# คำนวณ
+# ─────────────────────────────────────────────────────
+def calculate(Q, Qsafe, n, S, ex_arr, ey_arr):
+    nom = get_nom_positions(n, S)
+    ax_ = [nom[i][0] + ex_arr[i] for i in range(n)]
+    ay_ = [nom[i][1] + ey_arr[i] for i in range(n)]
 
-<script>
-const nSlider = document.getElementById('nPiles');
-const nOut    = document.getElementById('nPilesOut');
+    Xbar = sum(ax_) / n
+    Ybar = sum(ay_) / n
+    Mx   = Q * Ybar
+    My   = Q * Xbar
 
-nSlider.addEventListener('input', () => {
-  nOut.textContent = nSlider.value + ' ต้น';
-  buildPileInputs();
-});
+    xi = [ax_[i] - Xbar for i in range(n)]
+    yi = [ay_[i] - Ybar for i in range(n)]
 
-function buildPileInputs() {
-  const n = parseInt(nSlider.value);
-  const grid = document.getElementById('pileInputs');
-  grid.innerHTML = '';
-  for (let i = 0; i < n; i++) {
-    const div = document.createElement('div');
-    div.className = 'pile-card';
-    div.innerHTML = `
-      <div class="pile-head">เสาเข็มที่ ${i + 1}</div>
-      <div class="field-row">
-        <span>eₓ</span>
-        <input type="number" id="ex${i}" value="0" step="0.5">
-        <span class="field-label">cm</span>
-      </div>
-      <div class="field-row">
-        <span>e_y</span>
-        <input type="number" id="ey${i}" value="0" step="0.5">
-        <span class="field-label">cm</span>
-      </div>`;
-    grid.appendChild(div);
-  }
-}
-buildPileInputs();
+    sumX2 = sum(x**2 for x in xi)
+    sumY2 = sum(y**2 for y in yi)
+    sumXY = sum(xi[i]*yi[i] for i in range(n))
+    denom = sumX2*sumY2 - sumXY**2
 
-/* ตำแหน่งมาตรฐาน layout เสาเข็ม */
-function getPilePositions(n, S) {
-  const pos = [];
-  if (n === 2) {
-    pos.push([-S/2, 0], [S/2, 0]);
-  } else if (n === 3) {
-    const h = S * Math.sqrt(3) / 2;
-    pos.push([-S/2, -h/3], [S/2, -h/3], [0, 2*h/3]);
-  } else if (n === 4) {
-    pos.push([-S/2, -S/2], [S/2, -S/2], [S/2, S/2], [-S/2, S/2]);
-  } else if (n === 5) {
-    pos.push([-S/2, -S/2], [S/2, -S/2], [S/2, S/2], [-S/2, S/2], [0, 0]);
-  } else if (n === 6) {
-    pos.push([-S, -S/2], [0, -S/2], [S, -S/2], [-S, S/2], [0, S/2], [S, S/2]);
-  }
-  return pos;
-}
+    if abs(sumXY) < 1e-9 or abs(denom) < 1e-9:
+        Pi = [
+            Q/n
+            + (My*xi[i]/sumX2 if sumX2 > 1e-9 else 0)
+            + (Mx*yi[i]/sumY2 if sumY2 > 1e-9 else 0)
+            for i in range(n)
+        ]
+    else:
+        m  = (My*sumY2 - Mx*sumXY) / denom
+        nv = (Mx*sumX2 - My*sumXY) / denom
+        Pi = [Q/n + m*xi[i] + nv*yi[i] for i in range(n)]
 
-function calculate() {
-  const Q      = parseFloat(document.getElementById('Q').value)     || 100;
-  const Qsafe  = parseFloat(document.getElementById('Qsafe').value) || 40;
-  const n      = parseInt(nSlider.value);
-  const S      = parseFloat(document.getElementById('S').value)     || 120;
+    return dict(nom=nom, ax=ax_, ay=ay_, Xbar=Xbar, Ybar=Ybar,
+                Mx=Mx, My=My, xi=xi, yi=yi,
+                sumX2=sumX2, sumY2=sumY2, sumXY=sumXY, Pi=Pi)
 
-  const nomPos = getPilePositions(n, S);
-  const exArr  = [], eyArr = [];
-  for (let i = 0; i < n; i++) {
-    exArr.push(parseFloat(document.getElementById('ex' + i).value) || 0);
-    eyArr.push(parseFloat(document.getElementById('ey' + i).value) || 0);
-  }
 
-  /* ตำแหน่งจริงหลังเยื้อง */
-  const actualX = nomPos.map((p, i) => p[0] + exArr[i]);
-  const actualY = nomPos.map((p, i) => p[1] + eyArr[i]);
+# ─────────────────────────────────────────────────────
+# วาดแผนภาพ
+# ─────────────────────────────────────────────────────
+def draw_diagram(ax, res, S, ex_arr, ey_arr):
+    ax.clear()
+    ax.set_facecolor("#F9F8F5")
+    ax.set_aspect("equal")
+    ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.4, color="#aaa")
+    ax.axhline(0, color="#bbb", linewidth=0.6, linestyle="--")
+    ax.axvline(0, color="#bbb", linewidth=0.6, linestyle="--")
 
-  /* Centroid ใหม่ */
-  const Xbar = actualX.reduce((a, b) => a + b, 0) / n;
-  const Ybar = actualY.reduce((a, b) => a + b, 0) / n;
+    nom     = res["nom"]
+    actual_x= res["ax"]
+    actual_y= res["ay"]
+    Xbar    = res["Xbar"]
+    Ybar    = res["Ybar"]
+    n       = len(nom)
 
-  /* โมเมนต์ที่เกิดจากการเยื้อง */
-  const Mx = Q * Ybar;
-  const My = Q * Xbar;
+    # กล่องฐานราก
+    pad = S * 0.4
+    bx1, bx2 = min(actual_x)-pad, max(actual_x)+pad
+    by1, by2 = min(actual_y)-pad, max(actual_y)+pad
+    rect = mpatches.FancyBboxPatch(
+        (bx1, by1), bx2-bx1, by2-by1,
+        boxstyle="round,pad=0", linewidth=0.8,
+        edgecolor="#aaa", facecolor="#378ADD11"
+    )
+    ax.add_patch(rect)
 
-  /* พิกัดใหม่จาก Centroid ใหม่ */
-  const xi = actualX.map(x => x - Xbar);
-  const yi = actualY.map(y => y - Ybar);
+    r = S * 0.07
 
-  const sumX2  = xi.reduce((a, b) => a + b * b, 0);
-  const sumY2  = yi.reduce((a, b) => a + b * b, 0);
-  const sumXY  = xi.reduce((a, v, i) => a + v * yi[i], 0);
-  const denom  = sumX2 * sumY2 - sumXY * sumXY;
+    # ตำแหน่งออกแบบ (วงกลมประ)
+    for p in nom:
+        c = plt.Circle(p, r, color="#378ADD", fill=False,
+                       linestyle="--", linewidth=1.5)
+        ax.add_patch(c)
 
-  let Pi = [];
-  if (Math.abs(sumXY) < 1e-9 || Math.abs(denom) < 1e-9) {
-    /* กรณีแกนหลักตรงกัน (สมมาตร) */
-    Pi = xi.map((x, i) =>
-      Q / n
-      + (sumX2 > 1e-9 ? My * x / sumX2 : 0)
-      + (sumY2 > 1e-9 ? Mx * yi[i] / sumY2 : 0)
-    );
-  } else {
-    /* กรณีทั่วไป — Bakhoum (1992) */
-    const m  = (My * sumY2 - Mx * sumXY) / denom;
-    const nv = (Mx * sumX2 - My * sumXY) / denom;
-    Pi = xi.map((x, i) => Q / n + m * x + nv * yi[i]);
-  }
+    # เส้นเยื้อง + วงกลมตำแหน่งจริง
+    for i in range(n):
+        nx, ny = nom[i]
+        axi, ayi = actual_x[i], actual_y[i]
 
-  drawDiagram(n, nomPos, actualX, actualY, Xbar, Ybar, exArr, eyArr, S, xi, yi);
+        if ex_arr[i] != 0 or ey_arr[i] != 0:
+            ax.annotate("", xy=(axi, ayi), xytext=(nx, ny),
+                        arrowprops=dict(arrowstyle="->",
+                                        color="#EF9F27", lw=1.8))
 
-  /* แสดง Centroid cards */
-  document.getElementById('centroidCards').innerHTML = `
-    <div class="metric"><div class="lbl">X̄ (Centroid แกน X)</div><div class="val">${Xbar.toFixed(2)}</div><div class="sub">cm</div></div>
-    <div class="metric"><div class="lbl">Ȳ (Centroid แกน Y)</div><div class="val">${Ybar.toFixed(2)}</div><div class="sub">cm</div></div>
-    <div class="metric"><div class="lbl">Mₓ = Q × Ȳ</div><div class="val">${Mx.toFixed(1)}</div><div class="sub">ตัน-cm</div></div>
-    <div class="metric"><div class="lbl">My = Q × X̄</div><div class="val">${My.toFixed(1)}</div><div class="sub">ตัน-cm</div></div>
-    <div class="metric"><div class="lbl">Σx²</div><div class="val">${sumX2.toFixed(1)}</div><div class="sub">cm²</div></div>
-    <div class="metric"><div class="lbl">Σy²</div><div class="val">${sumY2.toFixed(1)}</div><div class="sub">cm²</div></div>
-    <div class="metric"><div class="lbl">Σxy</div><div class="val">${sumXY.toFixed(1)}</div><div class="sub">cm²</div></div>`;
+        c2 = plt.Circle((axi, ayi), r, color="#D85A30",
+                        fill=True, alpha=0.15, linewidth=0)
+        ax.add_patch(c2)
+        c3 = plt.Circle((axi, ayi), r, color="#D85A30",
+                        fill=False, linewidth=2)
+        ax.add_patch(c3)
+        ax.text(axi, ayi, str(i+1), ha="center", va="center",
+                fontsize=9, fontweight="bold", color="#2C2C2A")
 
-  /* แสดงแรงแต่ละต้น */
-  const resDiv = document.getElementById('pileResults');
-  resDiv.innerHTML = '';
-  Pi.forEach((p, i) => {
-    const pct = p / Qsafe * 100;
-    let cls = 'ok', txt = 'ปลอดภัย';
-    if (pct > 100) { cls = 'over'; txt = 'เกินขีดจำกัด!'; }
-    else if (pct > 80) { cls = 'warn'; txt = 'เฝ้าระวัง'; }
-    resDiv.innerHTML += `
-      <div class="pile-result-row">
-        <div style="font-size:13px;font-weight:500">เสาเข็มที่ ${i + 1}</div>
-        <div style="font-size:12px;color:#5F5E5A">x=${xi[i].toFixed(1)}, y=${yi[i].toFixed(1)} cm</div>
-        <div style="font-size:16px;font-weight:500">${p.toFixed(2)} ตัน</div>
-        <div style="font-size:12px;color:#5F5E5A">${pct.toFixed(0)}% ของ P_allow</div>
-        <span class="badge ${cls}">${txt}</span>
-      </div>`;
-  });
+        if ex_arr[i] != 0 or ey_arr[i] != 0:
+            lbl = f"({ex_arr[i]:+g},{ey_arr[i]:+g})"
+            ax.text(axi, ayi + r*1.6, lbl, ha="center",
+                    fontsize=8, color="#EF9F27")
 
-  document.getElementById('diagram-wrap').style.display = 'block';
-  document.getElementById('resultsSection').style.display = 'block';
-  document.getElementById('diagram-wrap').scrollIntoView({ behavior: 'smooth' });
-}
+    # Centroid ใหม่
+    if abs(Xbar) > 0.01 or abs(Ybar) > 0.01:
+        ax.plot(Xbar, Ybar, "+", color="#1D9E75",
+                markersize=16, markeredgewidth=2.5)
+        ax.plot(Xbar, Ybar, "o", color="#1D9E75", markersize=5)
+        ax.annotate(f"  Centroid ใหม่\n  ({Xbar:.2f}, {Ybar:.2f})",
+                    xy=(Xbar, Ybar), fontsize=8, color="#1D9E75", va="bottom")
 
-/* ---------- วาดแผนภาพ ---------- */
-function drawDiagram(n, nomPos, actualX, actualY, Xbar, Ybar, exArr, eyArr, S, xi, yi) {
-  const canvas = document.getElementById('diagramCanvas');
-  const ctx    = canvas.getContext('2d');
-  const W = 660, H = 340;
-  canvas.width = W; canvas.height = H;
-  ctx.clearRect(0, 0, W, H);
+    # O(0,0)
+    ax.plot(0, 0, "o", color="#888780", markersize=5)
+    ax.text(0, 0, "  O(0,0)", fontsize=8, color="#888780", va="bottom")
 
-  const textC  = '#2C2C2A';
-  const borderC = 'rgba(0,0,0,0.12)';
-  const nomC   = '#378ADD';
-  const actC   = '#D85A30';
-  const centC  = '#1D9E75';
-  const arrowC = '#EF9F27';
+    leg_handles = [
+        mpatches.Patch(edgecolor="#378ADD", facecolor="none",
+                       linestyle="--", label="ตำแหน่งออกแบบ"),
+        mpatches.Patch(edgecolor="#D85A30", facecolor="#D85A3030",
+                       label="ตำแหน่งจริง (เยื้อง)"),
+        mpatches.Patch(color="#EF9F27", label="ระยะเยื้อง"),
+        mpatches.Patch(color="#1D9E75", label="Centroid ใหม่"),
+    ]
+    ax.legend(handles=leg_handles, fontsize=8, loc="upper right",
+              framealpha=0.9)
+    ax.set_xlabel("X (cm)", fontsize=9)
+    ax.set_ylabel("Y (cm)", fontsize=9)
+    ax.set_title("ผังตำแหน่งเสาเข็ม", fontsize=11)
 
-  /* หา scale */
-  const allX = [...nomPos.map(p => p[0]), ...actualX, Xbar];
-  const allY = [...nomPos.map(p => p[1]), ...actualY, Ybar];
-  const minX = Math.min(...allX) - S * 0.9;
-  const maxX = Math.max(...allX) + S * 0.9;
-  const minY = Math.min(...allY) - S * 0.9;
-  const maxY = Math.max(...allY) + S * 0.9;
-  const rangeX = maxX - minX || S * 2;
-  const rangeY = maxY - minY || S * 2;
-  const scale  = Math.min((W - 120) / rangeX, (H - 80) / rangeY);
 
-  const cx = x => (x - minX) * scale + 60;
-  const cy = y => H - ((y - minY) * scale + 40);
+# ─────────────────────────────────────────────────────
+# GUI หลัก
+# ─────────────────────────────────────────────────────
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("คำนวณแรงปฏิกิริยาเสาเข็มเยื้องศูนย์")
+        self.configure(bg="#F5F4F0")
+        self.resizable(True, True)
 
-  /* พื้นที่ฐานราก (outline) */
-  const bx1 = Math.min(...actualX), bx2 = Math.max(...actualX);
-  const by1 = Math.min(...actualY), by2 = Math.max(...actualY);
-  const pad = S * 0.38;
-  ctx.fillStyle = 'rgba(55,138,221,0.05)';
-  ctx.strokeStyle = borderC;
-  ctx.lineWidth = 0.5;
-  ctx.beginPath();
-  ctx.roundRect(cx(bx1 - pad), cy(by2 + pad),
-    (bx2 - bx1 + 2 * pad) * scale,
-    (by2 - by1 + 2 * pad) * scale, 6);
-  ctx.fill(); ctx.stroke();
+        self.pile_ex = []
+        self.pile_ey = []
+        self._build_ui()
 
-  /* แกน XY */
-  const ox = cx(0), oy = cy(0);
-  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-  ctx.lineWidth = 0.5;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(ox, cy(minY)); ctx.lineTo(ox, cy(maxY)); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx(minX), oy); ctx.lineTo(cx(maxX), oy); ctx.stroke();
-  ctx.setLineDash([]);
+    # ── สร้าง UI ──────────────────────────────────
+    def _build_ui(self):
+        # ── LEFT PANEL ────────────────────────────
+        left = tk.Frame(self, bg="#F5F4F0", padx=12, pady=12)
+        left.grid(row=0, column=0, sticky="nsew")
 
-  ctx.fillStyle = '#888780'; ctx.font = '11px sans-serif';
-  ctx.textAlign = 'center'; ctx.fillText('Y', ox, cy(maxY) - 4);
-  ctx.textAlign = 'left';   ctx.fillText('X', cx(maxX) + 4, oy + 4);
+        self._section(left, "พารามิเตอร์หลัก", 0)
 
-  /* ตำแหน่งออกแบบ (วงกลมประ) */
-  nomPos.forEach(p => {
-    ctx.beginPath(); ctx.arc(cx(p[0]), cy(p[1]), 12, 0, Math.PI * 2);
-    ctx.strokeStyle = nomC; ctx.lineWidth = 1.5;
-    ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]);
-  });
+        params = tk.Frame(left, bg="#fff", bd=0, relief="flat",
+                          highlightbackground="#ddd", highlightthickness=1)
+        params.grid(row=1, column=0, sticky="ew", pady=(0, 10))
 
-  /* เส้นเยื้อง */
-  nomPos.forEach((p, i) => {
-    if (exArr[i] !== 0 || eyArr[i] !== 0) {
-      ctx.beginPath();
-      ctx.moveTo(cx(p[0]), cy(p[1]));
-      ctx.lineTo(cx(actualX[i]), cy(actualY[i]));
-      ctx.strokeStyle = arrowC; ctx.lineWidth = 1.5; ctx.stroke();
-    }
-  });
+        self.Q      = self._entry_row(params, 0, "น้ำหนักบรรทุก Q (ตัน)", "100")
+        self.Qsafe  = self._entry_row(params, 1, "น้ำหนักปลอดภัย (ตัน/ต้น)", "40")
+        self.S_var  = self._entry_row(params, 2, "ระยะห่างเสาเข็ม S (cm)", "120")
 
-  /* ตำแหน่งจริง */
-  actualX.forEach((ax, i) => {
-    const ay = actualY[i];
-    ctx.beginPath(); ctx.arc(cx(ax), cy(ay), 13, 0, Math.PI * 2);
-    ctx.fillStyle = actC + '30'; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx(ax), cy(ay), 13, 0, Math.PI * 2);
-    ctx.strokeStyle = actC; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = textC; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillText(i + 1, cx(ax), cy(ay));
-    ctx.font = '11px sans-serif';
-    if (exArr[i] !== 0 || eyArr[i] !== 0) {
-      ctx.fillStyle = arrowC;
-      const ex = exArr[i] >= 0 ? '+' + exArr[i] : '' + exArr[i];
-      const ey = eyArr[i] >= 0 ? '+' + eyArr[i] : '' + eyArr[i];
-      ctx.fillText(`(${ex},${ey})`, cx(ax), cy(ay) - 20);
-    }
-  });
+        # slider จำนวนเสาเข็ม
+        tk.Label(params, text="จำนวนเสาเข็ม (n)",
+                 bg="#fff", font=("Tahoma", 10),
+                 fg="#5F5E5A").grid(row=3, column=0, sticky="w",
+                                   padx=10, pady=4)
+        self.n_var = tk.IntVar(value=4)
+        frm_sl = tk.Frame(params, bg="#fff")
+        frm_sl.grid(row=3, column=1, sticky="w", padx=10)
+        sl = tk.Scale(frm_sl, from_=2, to=6, orient="horizontal",
+                      variable=self.n_var, length=120, bg="#fff",
+                      command=lambda _: self._rebuild_pile_inputs())
+        sl.pack(side="left")
+        self.n_label = tk.Label(frm_sl, text="4 ต้น", bg="#fff",
+                                font=("Tahoma", 10, "bold"), fg="#2C2C2A")
+        self.n_label.pack(side="left", padx=4)
 
-  /* Centroid ใหม่ */
-  if (Math.abs(Xbar) > 0.01 || Math.abs(Ybar) > 0.01) {
-    const cgx = cx(Xbar), cgy = cy(Ybar);
-    ctx.beginPath();
-    ctx.moveTo(cgx - 8, cgy); ctx.lineTo(cgx + 8, cgy);
-    ctx.moveTo(cgx, cgy - 8); ctx.lineTo(cgx, cgy + 8);
-    ctx.strokeStyle = centC; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(cgx, cgy, 5, 0, Math.PI * 2);
-    ctx.fillStyle = centC; ctx.fill();
-    ctx.fillStyle = centC; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.font = '11px sans-serif';
-    ctx.fillText(`Centroid ใหม่ (${Xbar.toFixed(2)}, ${Ybar.toFixed(2)})`, cgx + 8, cgy - 4);
-  }
+        # ── pile input area ───────────────────────
+        self._section(left, "ระยะเยื้องศูนย์แต่ละต้น (cm)", 2)
 
-  /* Centroid เดิม (0,0) */
-  ctx.beginPath(); ctx.arc(ox, oy, 4, 0, Math.PI * 2);
-  ctx.fillStyle = '#888780'; ctx.fill();
-  ctx.fillStyle = '#888780'; ctx.font = '11px sans-serif';
-  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-  ctx.fillText('O (0,0)', ox + 6, oy - 4);
+        note = tk.Label(left,
+            text="+eₓ=ขวา  −eₓ=ซ้าย  +ey=ขึ้น  −ey=ลง",
+            bg="#E6F1FB", fg="#185FA5", font=("Tahoma", 9),
+            padx=8, pady=4)
+        note.grid(row=3, column=0, sticky="ew", pady=(0, 6))
 
-  /* Legend */
-  const legends = [
-    { c: nomC,   t: 'ตำแหน่งออกแบบ', dash: true },
-    { c: actC,   t: 'ตำแหน่งจริง (เยื้อง)' },
-    { c: arrowC, t: 'ระยะเยื้อง' },
-    { c: centC,  t: 'Centroid ใหม่' },
-  ];
-  let lx = 10;
-  ctx.textBaseline = 'middle';
-  legends.forEach(l => {
-    ctx.beginPath();
-    if (l.dash) ctx.setLineDash([5, 3]);
-    ctx.moveTo(lx, 14); ctx.lineTo(lx + 20, 14);
-    ctx.strokeStyle = l.c; ctx.lineWidth = 2; ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = textC; ctx.textAlign = 'left';
-    ctx.font = '11px sans-serif';
-    ctx.fillText(l.t, lx + 24, 14);
-    lx += ctx.measureText(l.t).width + 44;
-  });
-}
-</script>
-</body>
-</html>
+        self.pile_frame = tk.Frame(left, bg="#F5F4F0")
+        self.pile_frame.grid(row=4, column=0, sticky="ew")
+        self._rebuild_pile_inputs()
+
+        # คำนวณ button
+        btn = tk.Button(left, text="คำนวณแรงปฏิกิริยา",
+                        command=self._calculate,
+                        bg="#2C2C2A", fg="white",
+                        font=("Tahoma", 11, "bold"),
+                        relief="flat", padx=10, pady=8,
+                        cursor="hand2")
+        btn.grid(row=5, column=0, sticky="ew", pady=10)
+
+        # ── result text ───────────────────────────
+        self._section(left, "ผลลัพธ์", 6)
+        self.result_text = tk.Text(left, width=38, height=18,
+                                   font=("Courier New", 9),
+                                   bg="#fff", fg="#2C2C2A",
+                                   relief="flat", bd=1,
+                                   highlightbackground="#ddd",
+                                   highlightthickness=1)
+        self.result_text.grid(row=7, column=0, sticky="ew")
+        left.columnconfigure(0, weight=1)
+
+        # ── RIGHT PANEL (matplotlib) ───────────────
+        right = tk.Frame(self, bg="#F5F4F0", padx=8, pady=12)
+        right.grid(row=0, column=1, sticky="nsew")
+
+        self.fig, self.ax_plot = plt.subplots(figsize=(6, 5.5))
+        self.fig.patch.set_facecolor("#F5F4F0")
+        self.canvas = FigureCanvasTkAgg(self.fig, master=right)
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(0, weight=1)
+
+    # ── helpers ───────────────────────────────────
+    def _section(self, parent, text, row):
+        tk.Label(parent, text=text.upper(),
+                 bg="#F5F4F0", fg="#5F5E5A",
+                 font=("Tahoma", 9, "bold")).grid(
+            row=row, column=0, sticky="w", pady=(10, 2))
+
+    def _entry_row(self, parent, row, label, default):
+        tk.Label(parent, text=label, bg="#fff",
+                 font=("Tahoma", 10), fg="#5F5E5A").grid(
+            row=row, column=0, sticky="w", padx=10, pady=4)
+        var = tk.StringVar(value=default)
+        e = tk.Entry(parent, textvariable=var, width=10,
+                     font=("Tahoma", 10), bg="#F1EFE8",
+                     relief="flat", bd=1,
+                     highlightbackground="#ccc", highlightthickness=1)
+        e.grid(row=row, column=1, sticky="w", padx=10, pady=4)
+        return var
+
+    def _rebuild_pile_inputs(self):
+        n = self.n_var.get()
+        self.n_label.config(text=f"{n} ต้น")
+        for w in self.pile_frame.winfo_children():
+            w.destroy()
+        self.pile_ex = []
+        self.pile_ey = []
+        for i in range(n):
+            frm = tk.Frame(self.pile_frame, bg="#F1EFE8", bd=0,
+                           highlightbackground="#ddd", highlightthickness=1)
+            frm.grid(row=i//4, column=i%4, padx=4, pady=4, sticky="ew")
+
+            tk.Label(frm, text=f"ต้นที่ {i+1}", bg="#F1EFE8",
+                     font=("Tahoma", 9, "bold"), fg="#2C2C2A").grid(
+                row=0, column=0, columnspan=3, sticky="w", padx=6, pady=(4, 0))
+
+            ex_var = tk.StringVar(value="0")
+            ey_var = tk.StringVar(value="0")
+
+            tk.Label(frm, text="eₓ", bg="#F1EFE8",
+                     font=("Tahoma", 9), fg="#5F5E5A").grid(
+                row=1, column=0, padx=(6,2), pady=2)
+            tk.Entry(frm, textvariable=ex_var, width=6,
+                     font=("Tahoma", 9), bg="#fff",
+                     relief="flat", bd=1,
+                     highlightbackground="#ccc", highlightthickness=1).grid(
+                row=1, column=1, pady=2)
+            tk.Label(frm, text="cm", bg="#F1EFE8",
+                     font=("Tahoma", 9), fg="#888").grid(row=1, column=2, padx=2)
+
+            tk.Label(frm, text="e_y", bg="#F1EFE8",
+                     font=("Tahoma", 9), fg="#5F5E5A").grid(
+                row=2, column=0, padx=(6,2), pady=(0,4))
+            tk.Entry(frm, textvariable=ey_var, width=6,
+                     font=("Tahoma", 9), bg="#fff",
+                     relief="flat", bd=1,
+                     highlightbackground="#ccc", highlightthickness=1).grid(
+                row=2, column=1, pady=(0,4))
+            tk.Label(frm, text="cm", bg="#F1EFE8",
+                     font=("Tahoma", 9), fg="#888").grid(row=2, column=2, padx=2)
+
+            self.pile_ex.append(ex_var)
+            self.pile_ey.append(ey_var)
+
+    # ── คำนวณและแสดงผล ────────────────────────────
+    def _calculate(self):
+        try:
+            Q     = float(self.Q.get())
+            Qsafe = float(self.Qsafe.get())
+            n     = self.n_var.get()
+            S     = float(self.S_var.get())
+            ex_arr= [float(v.get()) for v in self.pile_ex]
+            ey_arr= [float(v.get()) for v in self.pile_ey]
+        except ValueError:
+            messagebox.showerror("ข้อผิดพลาด", "กรุณากรอกตัวเลขให้ครบถ้วน")
+            return
+
+        res = calculate(Q, Qsafe, n, S, ex_arr, ey_arr)
+
+        # ── text result ───────────────────────────
+        self.result_text.delete("1.0", "end")
+        self.result_text.insert("end",
+            f"{'─'*36}\n"
+            f"  จุด Centroid ใหม่\n"
+            f"  X̄ = {res['Xbar']:8.3f} cm\n"
+            f"  Ȳ = {res['Ybar']:8.3f} cm\n"
+            f"  Mₓ = Q × Ȳ = {res['Mx']:8.2f} ตัน-cm\n"
+            f"  My = Q × X̄ = {res['My']:8.2f} ตัน-cm\n"
+            f"  Σx² = {res['sumX2']:8.2f} cm²\n"
+            f"  Σy² = {res['sumY2']:8.2f} cm²\n"
+            f"  Σxy = {res['sumXY']:8.2f} cm²\n"
+            f"{'─'*36}\n"
+            f"  แรงปฏิกิริยาแต่ละต้น\n"
+            f"{'─'*36}\n"
+        )
+        for i, p in enumerate(res["Pi"]):
+            pct = p / Qsafe * 100
+            status = "OK" if pct <= 80 else ("เฝ้าระวัง" if pct <= 100 else "เกิน!")
+            self.result_text.insert("end",
+                f"  ต้น {i+1}: x={res['xi'][i]:6.2f} y={res['yi'][i]:6.2f}\n"
+                f"         P = {p:8.3f} ตัน  ({pct:.0f}%) {status}\n"
+            )
+        self.result_text.insert("end", f"{'─'*36}\n")
+
+        # ── แผนภาพ ───────────────────────────────
+        draw_diagram(self.ax_plot, res, S, ex_arr, ey_arr)
+        self.canvas.draw()
+
+
+# ─────────────────────────────────────────────────────
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
